@@ -10,7 +10,7 @@ function Landing() {
     if (!email) return;
 
     try {
-      const res = await axios.post("http://localhost:8080/api/waitlist/join", {
+      const res = await axios.post('https://adpilot-backend-production-24e1.up.railway.app/api/waitlist/join', {
         email,
       });
       console.log("Waitlist response:", res.data);
