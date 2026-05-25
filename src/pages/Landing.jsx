@@ -39,6 +39,7 @@ function Landing() {
           <a href="#features" className="text-sm text-gray-400 hover:text-white transition">Features</a>
           <a href="#control" className="text-sm text-gray-400 hover:text-white transition">Your control</a>
           <a href="#compare" className="text-sm text-gray-400 hover:text-white transition">vs Agency</a>
+          <a href="/audit" className="text-sm text-gray-400 hover:text-white transition">Free Audit</a>
         </div>
         <a href="#waitlist" className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex-shrink-0">
           Join waitlist
@@ -533,10 +534,14 @@ function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 px-6 py-6 text-center">
+      <footer className="border-t border-white/5 px-8 py-6 text-center">
         <p className="text-gray-600 text-sm">© 2026 AdPilot. Your AI media buyer. Built for Egypt and the Middle East.</p>
+        <div className="flex items-center justify-center gap-6 mt-3">
+          <a href="/privacy" className="text-gray-600 text-xs hover:text-gray-400 transition">Privacy Policy</a>
+          <a href="/terms" className="text-gray-600 text-xs hover:text-gray-400 transition">Terms of Service</a>
+          <a href="mailto:hello@adpilot.io" className="text-gray-600 text-xs hover:text-gray-400 transition">Contact</a>
+        </div>
       </footer>
-
     </div>
   )
 }
