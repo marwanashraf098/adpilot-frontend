@@ -75,6 +75,7 @@ function Dashboard() {
       const payload = {
         industry: 'GYM',
         target_cpl: 50,
+        business_id: userId,
         campaigns: campaignData.map(c => ({
           name: c.name,
           status: c.status,

@@ -65,7 +65,9 @@ function Chat() {
       const res = await axios.post('https://adpilot-ai-service-production.up.railway.app/chat', {
         message: userMessage,
         campaigns: campaigns,
-        industry: 'business'
+        industry: 'business',
+        business_id: userId
+
       })
       setMessages(prev => [...prev, { role: 'assistant', content: res.data.response }])
     } catch (err) {

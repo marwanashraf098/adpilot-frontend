@@ -6,6 +6,7 @@ function CopyGenerator() {
   const navigate = useNavigate()
   const businessName = localStorage.getItem('businessName')
   const industry = 'GYM' // we'll make this dynamic later
+  const userId = localStorage.getItem('userId')
 
   const [form, setForm] = useState({
     industry: industry,
@@ -34,7 +35,10 @@ function CopyGenerator() {
     setError('')
     setVariants([])
     try {
-      const res = await axios.post('https://adpilot-ai-service-production.up.railway.app/generate-copy', form)
+      const res = await axios.post('https://adpilot-ai-service-production.up.railway.app/generate-copy', {
+        ...form,
+        business_id: userId
+      })      
       setVariants(res.data.variants)
     } catch (err) {
       setError('Failed to generate copy. Please try again.')
