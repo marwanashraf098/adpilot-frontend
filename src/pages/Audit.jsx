@@ -35,7 +35,7 @@ function Audit() {
     }
     setStep(2);
     try {
-      const res = await axios.post("https://adpilot-ai-service-production.up.railway.app", form);
+      const res = await axios.post("https://adpilot-ai-service-production.up.railway.app/audit", form);
       setAudit(res.data);
       setStep(3);
     } catch (err) {
