@@ -38,7 +38,7 @@ function Dashboard() {
 
   const fetchCampaigns = async () => {
     try {
-      const res = await axios.get(`http://localhost:8080/api/campaigns?userId=${userId}`)
+      const res = await axios.get(`https://adpilot-backend-production-24e1.up.railway.app/api/campaigns?userId=${userId}`)
       setCampaigns(res.data)
       fetchRecommendations(res.data)
     } catch (err) {
@@ -55,7 +55,7 @@ function Dashboard() {
 
   const handleConnectMeta = async () => {
     try {
-      const res = await axios.get(`http://localhost:8080/api/meta/oauth-url?userId=${userId}`)
+      const res = await axios.get(`https://adpilot-backend-production-24e1.up.railway.app/api/meta/oauth-url?userId=${userId}`)
       window.location.href = res.data.url
     } catch (err) {
       alert('Failed to get Meta OAuth URL')
@@ -86,7 +86,7 @@ function Dashboard() {
           impressions: c.impressions || 0
         }))
       }
-      const res = await axios.post('http://localhost:8001/generate-recommendations', payload)
+      const res = await axios.post('https://adpilot-ai-service-production.up.railway.app', payload)
       setRecommendations(res.data.recommendations)
     } catch (err) {
       console.error('Failed to fetch recommendations', err)

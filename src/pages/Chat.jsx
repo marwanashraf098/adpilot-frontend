@@ -37,7 +37,7 @@ function Chat() {
 
   const fetchCampaigns = async () => {
     try {
-      const res = await axios.get(`http://localhost:8080/api/campaigns?userId=${userId}`)
+      const res = await axios.get(`https://adpilot-backend-production-24e1.up.railway.app/api/campaigns?userId=${userId}`)
       setCampaigns(res.data.map(c => ({
         name: c.name,
         status: c.status,
@@ -62,7 +62,7 @@ function Chat() {
     setLoading(true)
 
     try {
-      const res = await axios.post('http://localhost:8001/chat', {
+      const res = await axios.post('https://adpilot-ai-service-production.up.railway.app', {
         message: userMessage,
         campaigns: campaigns,
         industry: 'business'

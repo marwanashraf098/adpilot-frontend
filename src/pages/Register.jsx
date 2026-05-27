@@ -23,7 +23,7 @@ function Register() {
     setLoading(true)
     setError('')
     try {
-      const res = await axios.post('http://localhost:8080/api/auth/register', form)
+      const res = await axios.post('https://adpilot-backend-production-24e1.up.railway.app/api/auth/register', form)
       localStorage.setItem('token', res.data.token)
       localStorage.setItem('businessName', res.data.businessName)
       localStorage.setItem('email', res.data.email)

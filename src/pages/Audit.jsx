@@ -35,7 +35,7 @@ function Audit() {
     }
     setStep(2);
     try {
-      const res = await axios.post("http://localhost:8001/audit", form);
+      const res = await axios.post("https://adpilot-ai-service-production.up.railway.app", form);
       setAudit(res.data);
       setStep(3);
     } catch (err) {
@@ -49,7 +49,7 @@ function Audit() {
     e.preventDefault();
     if (!email) return;
     try {
-      await axios.post("http://localhost:8080/api/waitlist/join", { email });
+      await axios.post("https://adpilot-backend-production-24e1.up.railway.app/api/waitlist/join", { email });
       setWaitlistDone(true);
       if (window.fbq) {
         window.fbq("track", "Lead", {
