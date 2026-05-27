@@ -62,7 +62,7 @@ function Chat() {
     setLoading(true)
 
     try {
-      const res = await axios.post('https://adpilot-ai-service-production.up.railway.app', {
+      const res = await axios.post('https://adpilot-ai-service-production.up.railway.app/chat', {
         message: userMessage,
         campaigns: campaigns,
         industry: 'business'

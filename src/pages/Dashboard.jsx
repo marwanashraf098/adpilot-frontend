@@ -86,7 +86,7 @@ function Dashboard() {
           impressions: c.impressions || 0
         }))
       }
-      const res = await axios.post('https://adpilot-ai-service-production.up.railway.app', payload)
+      const res = await axios.post('https://adpilot-ai-service-production.up.railway.app/generate-recommendations', payload)
       setRecommendations(res.data.recommendations)
     } catch (err) {
       console.error('Failed to fetch recommendations', err)

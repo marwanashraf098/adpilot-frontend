@@ -34,7 +34,7 @@ function CopyGenerator() {
     setError('')
     setVariants([])
     try {
-      const res = await axios.post('https://adpilot-ai-service-production.up.railway.app', form)
+      const res = await axios.post('https://adpilot-ai-service-production.up.railway.app/generate-copy', form)
       setVariants(res.data.variants)
     } catch (err) {
       setError('Failed to generate copy. Please try again.')
