@@ -28,6 +28,7 @@ function Register() {
       localStorage.setItem('businessName', res.data.businessName)
       localStorage.setItem('email', res.data.email)
       localStorage.setItem('userId', res.data.userId)
+      localStorage.setItem('industry', res.data.industry || 'business')
       navigate('/dashboard')
     } catch (err) {
       setError('Registration failed. Email may already be in use.')
