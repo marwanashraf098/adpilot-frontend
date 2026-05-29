@@ -15,10 +15,11 @@ function Landing() {
       setSubmitted(true)
 
       if (window.fbq) {
+        const eventId = `landing_lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         window.fbq('track', 'Lead', {
           content_name: 'Waitlist Signup',
           content_category: 'AdPilot',
-        })
+        }, { eventID: eventId });
       }
     } catch (err) {
       console.error('Waitlist error:', err)

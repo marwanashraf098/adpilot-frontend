@@ -124,10 +124,11 @@ function Audit() {
 
       setWaitlistDone(true);
       if (window.fbq) {
+        const eventId = `audit_lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         window.fbq("track", "Lead", {
           content_name: "Audit Tool Waitlist",
           content_category: "AdPilot",
-        });
+        }, { eventID: eventId });
       }
     } catch (err) {
       setWaitlistDone(true);
