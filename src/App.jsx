@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard'
 import CopyGenerator from './pages/CopyGenerator'
 import Chat from './pages/Chat'
 import Onboarding from './pages/Onboarding'
+import CreateCampaign from './pages/CreateCampaign'
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('token')
@@ -38,6 +39,9 @@ function App() {
           <PrivateRoute><Chat /></PrivateRoute>
         } />
         <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/create-campaign" element={
+          <PrivateRoute><CreateCampaign /></PrivateRoute>
+        } />
       </Routes>
     </BrowserRouter>
   )
