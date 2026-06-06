@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 
-const BACKEND = 'https://adpilot-backend-production-24e1.up.railway.app'
-const AI = 'https://adpilot-ai-service-production.up.railway.app'
+const BACKEND = 'http://localhost:8080'
+const AI = 'http://localhost:8001'
 
 function Onboarding() {
   const navigate = useNavigate()
@@ -47,11 +47,11 @@ function Onboarding() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
-    const stepParam = params.get('step')
     const connected = params.get('connected')
-    if (stepParam && connected === 'true') {
-      setStep(parseInt(stepParam))
+    if (connected === 'true') {
+      setStep(7)
       setHealthScore(90)
+      localStorage.removeItem('oauthReturnTo')
     }
   }, [])
 
@@ -75,9 +75,7 @@ function Onboarding() {
       })
 
       const data = res.data
-      if (data.scan_failed) {
-        setScanError(data.scan_message)
-      }
+      if (data.scan_failed) setScanError(data.scan_message)
 
       setForm(prev => ({
         ...prev,
@@ -129,11 +127,60 @@ function Onboarding() {
   }
 
   const handleComplete = async () => {
-    await saveStep({
-      healthScore: healthScore,
-      onboardingComplete: true
-    })
-    navigate('/dashboard')
+    setSaving(true)
+    try {
+      // Save final onboarding data
+      await axios.post(`${BACKEND}/api/business/${userId}`, {
+        healthScore: healthScore,
+        onboardingComplete: true
+      })
+
+      // Build Business RAG with all collected data
+      try {
+        await axios.post(`${AI}/build-business-rag`, {
+          business_id: userId,
+          business_data: {
+            business_name: form.businessName,
+            industry: form.industry,
+            city: form.city,
+            description: form.description,
+            services: form.services,
+            unique_selling_point: form.uniqueSellingPoint,
+            price_range: form.priceRange,
+            brand_tone: form.brandTone,
+            target_audience: form.targetAudience,
+            min_age: form.minAge,
+            max_age: form.maxAge,
+            gender: form.gender,
+            customer_source: form.customerSource,
+            buying_cycle: form.buyingCycle,
+            average_customer_value: form.averageCustomerValue,
+            main_goal: form.mainGoal,
+            monthly_budget: form.monthlyBudget,
+            target_cpl: form.targetCpl,
+            biggest_challenge: form.biggestChallenge,
+            competitors: form.competitors,
+            competitor_advantage: form.competitorAdvantage,
+            our_advantage: form.ourAdvantage,
+            website_url: form.websiteUrl,
+            facebook_page_url: form.facebookPageUrl,
+            instagram_url: form.instagramUrl,
+          }
+        })
+        console.log('Business RAG built successfully')
+      } catch (ragErr) {
+        console.error('RAG build failed (non-critical):', ragErr)
+      }
+
+      // Save industry to localStorage
+      localStorage.setItem('industry', form.industry)
+
+      navigate('/dashboard')
+    } catch (err) {
+      console.error('Complete failed', err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const progressWidth = `${(step / 7) * 100}%`
@@ -173,60 +220,39 @@ function Onboarding() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Website URL</label>
-                <input
-                  type="text"
-                  value={form.websiteUrl}
+                <input type="text" value={form.websiteUrl}
                   onChange={(e) => setForm({...form, websiteUrl: e.target.value})}
                   placeholder="https://yourbusiness.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                />
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">f</div>
-                <input
-                  type="text"
-                  value={form.facebookPageUrl}
+                <input type="text" value={form.facebookPageUrl}
                   onChange={(e) => setForm({...form, facebookPageUrl: e.target.value})}
                   placeholder="Facebook page URL (optional)"
-                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                />
+                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold flex-shrink-0">IG</div>
-                <input
-                  type="text"
-                  value={form.instagramUrl}
+                <input type="text" value={form.instagramUrl}
                   onChange={(e) => setForm({...form, instagramUrl: e.target.value})}
                   placeholder="Instagram URL (optional)"
-                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                />
+                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
               </div>
 
               {scanError && (
-                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-4 py-3 text-yellow-400 text-sm">
-                  ⚠ {scanError}
-                </div>
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-4 py-3 text-yellow-400 text-sm">⚠ {scanError}</div>
               )}
 
-              <button
-                onClick={handleScan}
-                disabled={scanning}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
-              >
+              <button onClick={handleScan} disabled={scanning}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
                 {scanning ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Scanning your business...
-                  </>
-                ) : (
-                  '🔍 Scan my business →'
-                )}
+                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Scanning your business...</>
+                ) : '🔍 Scan my business →'}
               </button>
 
-              <button
-                onClick={() => { setStep(2); updateScore(2) }}
-                className="w-full text-gray-500 text-sm hover:text-gray-300 transition py-2"
-              >
+              <button onClick={() => { setStep(2); updateScore(2) }}
+                className="w-full text-gray-500 text-sm hover:text-gray-300 transition py-2">
                 Skip and fill manually →
               </button>
             </div>
@@ -246,32 +272,23 @@ function Onboarding() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Business name *</label>
-                  <input
-                    type="text"
-                    value={form.businessName}
+                  <input type="text" value={form.businessName}
                     onChange={(e) => setForm({...form, businessName: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm"
-                  />
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">City *</label>
-                  <input
-                    type="text"
-                    value={form.city}
+                  <input type="text" value={form.city}
                     onChange={(e) => setForm({...form, city: e.target.value})}
                     placeholder="e.g. Cairo"
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                  />
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Industry</label>
-                <select
-                  value={form.industry}
-                  onChange={(e) => setForm({...form, industry: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm"
-                >
+                <select value={form.industry} onChange={(e) => setForm({...form, industry: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm">
                   <option value="gym">Gym / Fitness</option>
                   <option value="clinic">Clinic / Healthcare</option>
                   <option value="restaurant">Restaurant / Food</option>
@@ -285,45 +302,32 @@ function Onboarding() {
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Business description</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({...form, description: e.target.value})}
-                  rows={3}
-                  placeholder="What does your business do?"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm resize-none"
-                />
+                <textarea value={form.description} onChange={(e) => setForm({...form, description: e.target.value})}
+                  rows={3} placeholder="What does your business do?"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm resize-none" />
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Main services / products</label>
-                <input
-                  type="text"
-                  value={form.services}
+                <input type="text" value={form.services}
                   onChange={(e) => setForm({...form, services: e.target.value})}
                   placeholder="e.g. Personal training, Group classes, Nutrition coaching"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                />
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">What makes you different?</label>
-                <input
-                  type="text"
-                  value={form.uniqueSellingPoint}
+                <input type="text" value={form.uniqueSellingPoint}
                   onChange={(e) => setForm({...form, uniqueSellingPoint: e.target.value})}
                   placeholder="Your unique selling point"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                />
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Price range</label>
-                  <select
-                    value={form.priceRange}
-                    onChange={(e) => setForm({...form, priceRange: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm"
-                  >
+                  <select value={form.priceRange} onChange={(e) => setForm({...form, priceRange: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm">
                     <option value="budget">Budget</option>
                     <option value="mid-range">Mid-range</option>
                     <option value="premium">Premium</option>
@@ -332,11 +336,8 @@ function Onboarding() {
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Brand tone</label>
-                  <select
-                    value={form.brandTone}
-                    onChange={(e) => setForm({...form, brandTone: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm"
-                  >
+                  <select value={form.brandTone} onChange={(e) => setForm({...form, brandTone: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm">
                     <option value="friendly">Friendly</option>
                     <option value="professional">Professional</option>
                     <option value="urgent">Urgent</option>
@@ -346,22 +347,13 @@ function Onboarding() {
                 </div>
               </div>
 
-              <button
-                onClick={() => goToStep(3, {
-                  websiteUrl: form.websiteUrl,
-                  facebookPageUrl: form.facebookPageUrl,
-                  instagramUrl: form.instagramUrl,
-                  businessName: form.businessName,
-                  industry: form.industry,
-                  city: form.city,
-                  description: form.description,
-                  services: form.services,
-                  uniqueSellingPoint: form.uniqueSellingPoint,
-                  priceRange: form.priceRange,
-                  brandTone: form.brandTone,
-                })}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition"
-              >
+              <button onClick={() => goToStep(3, {
+                websiteUrl: form.websiteUrl, facebookPageUrl: form.facebookPageUrl,
+                instagramUrl: form.instagramUrl, businessName: form.businessName,
+                industry: form.industry, city: form.city, description: form.description,
+                services: form.services, uniqueSellingPoint: form.uniqueSellingPoint,
+                priceRange: form.priceRange, brandTone: form.brandTone,
+              })} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
                 Continue →
               </button>
             </div>
@@ -380,32 +372,23 @@ function Onboarding() {
             <div className="space-y-5">
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Who are your customers?</label>
-                <input
-                  type="text"
-                  value={form.targetAudience}
+                <input type="text" value={form.targetAudience}
                   onChange={(e) => setForm({...form, targetAudience: e.target.value})}
                   placeholder="e.g. Women aged 25-40 in Cairo interested in fitness"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                />
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-3">Age range</label>
                 <div className="flex items-center gap-4">
-                  <input
-                    type="number"
-                    value={form.minAge}
+                  <input type="number" value={form.minAge}
                     onChange={(e) => setForm({...form, minAge: parseInt(e.target.value)})}
-                    className="w-24 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm"
-                  />
+                    className="w-24 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm" />
                   <span className="text-gray-500">to</span>
-                  <input
-                    type="number"
-                    value={form.maxAge}
+                  <input type="number" value={form.maxAge}
                     onChange={(e) => setForm({...form, maxAge: parseInt(e.target.value)})}
-                    className="w-24 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm"
-                  />
-                  <span className="text-gray-500">years old</span>
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition text-sm" />
+                  <span className="text-gray-500 whitespace-nowrap">years old</span>
                 </div>
               </div>
 
@@ -413,16 +396,10 @@ function Onboarding() {
                 <label className="block text-sm text-gray-400 mb-3">Gender</label>
                 <div className="grid grid-cols-3 gap-3">
                   {['all', 'female', 'male'].map(opt => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setForm({...form, gender: opt})}
+                    <button key={opt} type="button" onClick={() => setForm({...form, gender: opt})}
                       className={`py-3 rounded-lg text-sm font-medium border transition capitalize ${
-                        form.gender === opt
-                          ? 'bg-blue-600 border-blue-600 text-white'
-                          : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
-                      }`}
-                    >
+                        form.gender === opt ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
+                      }`}>
                       {opt === 'all' ? 'All genders' : opt}
                     </button>
                   ))}
@@ -433,16 +410,10 @@ function Onboarding() {
                 <label className="block text-sm text-gray-400 mb-3">Where do customers come from?</label>
                 <div className="grid grid-cols-2 gap-3">
                   {['Walk-in', 'Social media', 'Referral', 'Online search', 'Ads', 'Other'].map(opt => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setForm({...form, customerSource: opt})}
+                    <button key={opt} type="button" onClick={() => setForm({...form, customerSource: opt})}
                       className={`py-3 rounded-lg text-sm font-medium border transition ${
-                        form.customerSource === opt
-                          ? 'bg-blue-600 border-blue-600 text-white'
-                          : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
-                      }`}
-                    >
+                        form.customerSource === opt ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
+                      }`}>
                       {opt}
                     </button>
                   ))}
@@ -450,19 +421,13 @@ function Onboarding() {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-3">How long does it take a customer to decide to buy?</label>
+                <label className="block text-sm text-gray-400 mb-3">How long does it take a customer to decide?</label>
                 <div className="grid grid-cols-2 gap-3">
                   {['Instantly', 'Same day', 'Few days', 'Few weeks', 'Few months'].map(opt => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setForm({...form, buyingCycle: opt})}
+                    <button key={opt} type="button" onClick={() => setForm({...form, buyingCycle: opt})}
                       className={`py-3 rounded-lg text-sm font-medium border transition ${
-                        form.buyingCycle === opt
-                          ? 'bg-blue-600 border-blue-600 text-white'
-                          : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
-                      }`}
-                    >
+                        form.buyingCycle === opt ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
+                      }`}>
                       {opt}
                     </button>
                   ))}
@@ -471,27 +436,17 @@ function Onboarding() {
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Average customer value (EGP)</label>
-                <input
-                  type="number"
-                  value={form.averageCustomerValue}
+                <input type="number" value={form.averageCustomerValue}
                   onChange={(e) => setForm({...form, averageCustomerValue: e.target.value})}
                   placeholder="e.g. 500"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                />
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
               </div>
 
-              <button
-                onClick={() => goToStep(4, {
-                  targetAudience: form.targetAudience,
-                  minAge: form.minAge,
-                  maxAge: form.maxAge,
-                  gender: form.gender,
-                  customerSource: form.customerSource,
-                  buyingCycle: form.buyingCycle,
-                  averageCustomerValue: form.averageCustomerValue ? parseFloat(form.averageCustomerValue) : null,
-                })}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition"
-              >
+              <button onClick={() => goToStep(4, {
+                targetAudience: form.targetAudience, minAge: form.minAge, maxAge: form.maxAge,
+                gender: form.gender, customerSource: form.customerSource, buyingCycle: form.buyingCycle,
+                averageCustomerValue: form.averageCustomerValue ? parseFloat(form.averageCustomerValue) : null,
+              })} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
                 Continue →
               </button>
             </div>
@@ -512,16 +467,10 @@ function Onboarding() {
                 <label className="block text-sm text-gray-400 mb-3">Main advertising goal</label>
                 <div className="grid grid-cols-2 gap-3">
                   {['Get more leads', 'Increase sales', 'Build brand awareness', 'Get more website traffic', 'Get more app installs', 'Get more store visits'].map(opt => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setForm({...form, mainGoal: opt})}
+                    <button key={opt} type="button" onClick={() => setForm({...form, mainGoal: opt})}
                       className={`py-3 rounded-lg text-sm font-medium border transition ${
-                        form.mainGoal === opt
-                          ? 'bg-blue-600 border-blue-600 text-white'
-                          : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
-                      }`}
-                    >
+                        form.mainGoal === opt ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
+                      }`}>
                       {opt}
                     </button>
                   ))}
@@ -532,16 +481,10 @@ function Onboarding() {
                 <label className="block text-sm text-gray-400 mb-3">Monthly ad budget (EGP)</label>
                 <div className="grid grid-cols-2 gap-3">
                   {['Under 1,000', '1,000–3,000', '3,000–10,000', '10,000–30,000', 'Over 30,000'].map(opt => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setForm({...form, monthlyBudget: opt})}
+                    <button key={opt} type="button" onClick={() => setForm({...form, monthlyBudget: opt})}
                       className={`py-3 rounded-lg text-sm font-medium border transition ${
-                        form.monthlyBudget === opt
-                          ? 'bg-blue-600 border-blue-600 text-white'
-                          : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
-                      }`}
-                    >
+                        form.monthlyBudget === opt ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
+                      }`}>
                       EGP {opt}
                     </button>
                   ))}
@@ -550,24 +493,18 @@ function Onboarding() {
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Target cost per lead (EGP)</label>
-                <input
-                  type="number"
-                  value={form.targetCpl}
+                <input type="number" value={form.targetCpl}
                   onChange={(e) => setForm({...form, targetCpl: e.target.value})}
                   placeholder="e.g. 50"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                />
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">WhatsApp number for alerts</label>
-                <input
-                  type="text"
-                  value={form.phoneNumber}
+                <input type="text" value={form.phoneNumber}
                   onChange={(e) => setForm({...form, phoneNumber: e.target.value})}
                   placeholder="+201234567890"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                />
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
                 <p className="text-xs text-gray-500 mt-1">You'll get WhatsApp alerts when campaigns underperform</p>
               </div>
 
@@ -582,32 +519,21 @@ function Onboarding() {
                     "My agency isn't delivering results",
                     "I'm running ads myself but it's too complex"
                   ].map(opt => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setForm({...form, biggestChallenge: opt})}
+                    <button key={opt} type="button" onClick={() => setForm({...form, biggestChallenge: opt})}
                       className={`py-3 px-4 rounded-lg text-sm font-medium border transition text-left ${
-                        form.biggestChallenge === opt
-                          ? 'bg-blue-600 border-blue-600 text-white'
-                          : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
-                      }`}
-                    >
+                        form.biggestChallenge === opt ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:border-blue-500'
+                      }`}>
                       {opt}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <button
-                onClick={() => goToStep(5, {
-                  mainGoal: form.mainGoal,
-                  monthlyBudget: form.monthlyBudget,
-                  targetCpl: form.targetCpl ? parseFloat(form.targetCpl) : null,
-                  phoneNumber: form.phoneNumber,
-                  biggestChallenge: form.biggestChallenge,
-                })}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition"
-              >
+              <button onClick={() => goToStep(5, {
+                mainGoal: form.mainGoal, monthlyBudget: form.monthlyBudget,
+                targetCpl: form.targetCpl ? parseFloat(form.targetCpl) : null,
+                phoneNumber: form.phoneNumber, biggestChallenge: form.biggestChallenge,
+              })} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
                 Continue →
               </button>
             </div>
@@ -626,52 +552,37 @@ function Onboarding() {
             <div className="space-y-5">
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Top 3 competitors (Facebook page names or URLs)</label>
-                <textarea
-                  value={form.competitors}
-                  onChange={(e) => setForm({...form, competitors: e.target.value})}
-                  rows={3}
-                  placeholder="e.g. Gold's Gym Cairo, FitLife Egypt, Curves Egypt"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm resize-none"
-                />
+                <textarea value={form.competitors} onChange={(e) => setForm({...form, competitors: e.target.value})}
+                  rows={3} placeholder="e.g. Gold's Gym Cairo, FitLife Egypt, Curves Egypt"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm resize-none" />
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">What do competitors do better than you?</label>
-                <input
-                  type="text"
-                  value={form.competitorAdvantage}
+                <input type="text" value={form.competitorAdvantage}
                   onChange={(e) => setForm({...form, competitorAdvantage: e.target.value})}
                   placeholder="e.g. Bigger brand, more locations, lower prices"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                />
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">What do YOU do better than competitors?</label>
-                <input
-                  type="text"
-                  value={form.ourAdvantage}
+                <input type="text" value={form.ourAdvantage}
                   onChange={(e) => setForm({...form, ourAdvantage: e.target.value})}
                   placeholder="e.g. Better trainers, more personal, results-focused"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm"
-                />
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm" />
               </div>
 
               <div className="flex gap-3">
-                <button
-                  onClick={() => goToStep(6, {
-                    competitors: form.competitors,
-                    competitorAdvantage: form.competitorAdvantage,
-                    ourAdvantage: form.ourAdvantage,
-                  })}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition"
-                >
+                <button onClick={() => goToStep(6, {
+                  competitors: form.competitors,
+                  competitorAdvantage: form.competitorAdvantage,
+                  ourAdvantage: form.ourAdvantage,
+                })} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
                   Continue →
                 </button>
-                <button
-                  onClick={() => goToStep(6, {})}
-                  className="px-6 bg-white/5 hover:bg-white/10 text-gray-400 font-medium py-3 rounded-lg transition text-sm"
-                >
+                <button onClick={() => goToStep(6, {})}
+                  className="px-6 bg-white/5 hover:bg-white/10 text-gray-400 font-medium py-3 rounded-lg transition text-sm">
                   Skip
                 </button>
               </div>
@@ -700,24 +611,20 @@ function Onboarding() {
                 </ul>
               </div>
 
-              <button
-                onClick={async () => {
-                  try {
-                    const res = await axios.get(`${BACKEND}/api/meta/oauth-url?userId=${userId}`)
-                    window.location.href = res.data.url
-                  } catch (err) {
-                    alert('Failed to connect Meta. Please try again.')
-                  }
-                }}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition"
-              >
+              <button onClick={async () => {
+                try {
+                  localStorage.setItem('oauthReturnTo', 'onboarding')
+                  const res = await axios.get(`${BACKEND}/api/meta/oauth-url?userId=${userId}&source=onboarding`)
+                  window.location.href = res.data.url
+                } catch (err) {
+                  alert('Failed to connect Meta. Please try again.')
+                }
+              }} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
                 Connect Facebook & Instagram Ads →
               </button>
 
-              <button
-                onClick={() => goToStep(7, {})}
-                className="w-full text-gray-500 text-sm hover:text-gray-300 transition py-2"
-              >
+              <button onClick={() => goToStep(7, {})}
+                className="w-full text-gray-500 text-sm hover:text-gray-300 transition py-2">
                 Skip for now — connect later →
               </button>
             </div>
@@ -730,7 +637,7 @@ function Onboarding() {
             <div className="mb-8">
               <div className="w-12 h-12 rounded-2xl bg-green-600 flex items-center justify-center text-xl mb-4 mx-auto">🎉</div>
               <h2 className="text-3xl font-bold mb-2">You're all set!</h2>
-              <p className="text-gray-400">Your Meta account is connected and AdPilot is ready to go.</p>
+              <p className="text-gray-400">Your AdPilot is ready. Let's look at your dashboard.</p>
             </div>
 
             <div className={`inline-flex flex-col items-center justify-center w-40 h-40 rounded-full border-4 mx-auto mb-6 border-green-400 bg-green-400/10`}>
@@ -742,19 +649,18 @@ function Onboarding() {
               <h3 className="font-semibold mb-4">What's ready:</h3>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2 text-green-400"><span>✓</span> Business profile created</li>
-                <li className="flex items-center gap-2 text-green-400"><span>✓</span> Meta account connected</li>
+                <li className="flex items-center gap-2 text-green-400"><span>✓</span> AI knowledge base built</li>
                 <li className="flex items-center gap-2 text-green-400"><span>✓</span> Campaigns syncing</li>
                 <li className="flex items-center gap-2 text-green-400"><span>✓</span> AI recommendations ready</li>
                 <li className="flex items-center gap-2 text-green-400"><span>✓</span> WhatsApp alerts configured</li>
               </ul>
             </div>
 
-            <button
-              onClick={handleComplete}
-              disabled={saving}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition"
-            >
-              {saving ? 'Setting up your dashboard...' : 'Enter my dashboard →'}
+            <button onClick={handleComplete} disabled={saving}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
+              {saving ? (
+                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Setting up your dashboard...</>
+              ) : 'Enter my dashboard →'}
             </button>
           </div>
         )}

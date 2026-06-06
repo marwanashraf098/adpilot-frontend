@@ -2,10 +2,14 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
+const BACKEND = 'http://localhost:8080'
+const AI = 'http://localhost:8001'
+
 function Chat() {
   const navigate = useNavigate()
   const businessName = localStorage.getItem('businessName')
   const userId = localStorage.getItem('userId')
+  const industry = localStorage.getItem('industry') || 'business'
   const messagesEndRef = useRef(null)
 
   const [messages, setMessages] = useState([
@@ -19,10 +23,7 @@ function Chat() {
   const [campaigns, setCampaigns] = useState([])
 
   useEffect(() => {
-    if (!localStorage.getItem('token')) {
-      navigate('/login')
-      return
-    }
+    if (!localStorage.getItem('token')) { navigate('/login'); return }
     fetchCampaigns()
     scrollToBottom()
   }, [])
@@ -37,7 +38,7 @@ function Chat() {
 
   const fetchCampaigns = async () => {
     try {
-      const res = await axios.get(`https://adpilot-backend-production-24e1.up.railway.app/api/campaigns?userId=${userId}`)
+      const res = await axios.get(`${BACKEND}/api/campaigns?userId=${userId}`)
       setCampaigns(res.data.map(c => ({
         name: c.name,
         status: c.status,
@@ -62,12 +63,11 @@ function Chat() {
     setLoading(true)
 
     try {
-      const res = await axios.post('https://adpilot-ai-service-production.up.railway.app/chat', {
+      const res = await axios.post(`${AI}/chat`, {
         message: userMessage,
         campaigns: campaigns,
-        industry: 'business',
+        industry: industry,
         business_id: userId
-
       })
       setMessages(prev => [...prev, { role: 'assistant', content: res.data.response }])
     } catch (err) {
@@ -102,10 +102,7 @@ function Chat() {
         <h1 className="text-xl font-bold cursor-pointer" onClick={() => navigate('/dashboard')}>AdPilot</h1>
         <div className="flex items-center gap-4">
           <span className="text-gray-400 text-sm">{businessName}</span>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="text-sm text-gray-400 hover:text-white transition"
-          >
+          <button onClick={() => navigate('/dashboard')} className="text-sm text-gray-400 hover:text-white transition">
             ← Dashboard
           </button>
         </div>
@@ -127,7 +124,6 @@ function Chat() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {msg.role === 'assistant' && (
@@ -163,11 +159,8 @@ function Chat() {
       {messages.length === 1 && (
         <div className="px-6 pb-4 flex flex-wrap gap-2 flex-shrink-0">
           {suggestions.map((s, i) => (
-            <button
-              key={i}
-              onClick={() => { setInput(s); }}
-              className="text-xs bg-gray-900 border border-gray-700 hover:border-blue-500 text-gray-300 px-3 py-2 rounded-lg transition"
-            >
+            <button key={i} onClick={() => setInput(s)}
+              className="text-xs bg-gray-900 border border-gray-700 hover:border-blue-500 text-gray-300 px-3 py-2 rounded-lg transition">
               {s}
             </button>
           ))}
@@ -177,20 +170,12 @@ function Chat() {
       {/* Input */}
       <div className="px-6 py-4 border-t border-gray-800 flex-shrink-0">
         <div className="flex gap-3 items-end">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Ask anything about your campaigns..."
-            rows={1}
+          <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyPress}
+            placeholder="Ask anything about your campaigns..." rows={1}
             className="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm resize-none"
-            style={{minHeight: '44px', maxHeight: '120px'}}
-          />
-          <button
-            onClick={handleSend}
-            disabled={loading || !input.trim()}
-            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl px-4 py-3 transition flex-shrink-0"
-          >
+            style={{minHeight: '44px', maxHeight: '120px'}} />
+          <button onClick={handleSend} disabled={loading || !input.trim()}
+            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl px-4 py-3 transition flex-shrink-0">
             →
           </button>
         </div>

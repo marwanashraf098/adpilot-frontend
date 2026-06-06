@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 
-const BACKEND = 'https://adpilot-backend-production-24e1.up.railway.app'
+const BACKEND = 'http://localhost:8080'
 function Login() {
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 
+const BACKEND = 'http://localhost:8080'
+
 function Register() {
   const navigate = useNavigate()
   const [form, setForm] = useState({
@@ -23,7 +25,7 @@ function Register() {
     setLoading(true)
     setError('')
     try {
-      const res = await axios.post('https://adpilot-backend-production-24e1.up.railway.app/api/auth/register', form)
+      const res = await axios.post(`${BACKEND}/api/auth/register`, form)
       localStorage.setItem('token', res.data.token)
       localStorage.setItem('businessName', res.data.businessName)
       localStorage.setItem('email', res.data.email)
@@ -41,13 +43,11 @@ function Register() {
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
 
-        {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white">AdPilot</h1>
           <p className="text-gray-400 mt-2">Start managing your ads with AI</p>
         </div>
 
-        {/* Card */}
         <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
           <h2 className="text-xl font-semibold text-white mb-6">Create your account</h2>
 
@@ -60,38 +60,22 @@ function Register() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm text-gray-400 mb-1">Full name</label>
-              <input
-                type="text"
-                name="fullName"
-                value={form.fullName}
-                onChange={handleChange}
-                required
+              <input type="text" name="fullName" value={form.fullName} onChange={handleChange} required
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition"
-                placeholder="Ahmed Mohamed"
-              />
+                placeholder="Ahmed Mohamed" />
             </div>
 
             <div>
               <label className="block text-sm text-gray-400 mb-1">Business name</label>
-              <input
-                type="text"
-                name="businessName"
-                value={form.businessName}
-                onChange={handleChange}
-                required
+              <input type="text" name="businessName" value={form.businessName} onChange={handleChange} required
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition"
-                placeholder="Cairo Gym"
-              />
+                placeholder="Cairo Gym" />
             </div>
 
             <div>
               <label className="block text-sm text-gray-400 mb-1">Industry</label>
-              <select
-                name="industry"
-                value={form.industry}
-                onChange={handleChange}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition"
-              >
+              <select name="industry" value={form.industry} onChange={handleChange}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition">
                 <option value="GYM">Gym</option>
                 <option value="CLINIC">Clinic</option>
                 <option value="RESTAURANT">Restaurant</option>
@@ -105,44 +89,27 @@ function Register() {
 
             <div>
               <label className="block text-sm text-gray-400 mb-1">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                required
+              <input type="email" name="email" value={form.email} onChange={handleChange} required
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition"
-                placeholder="you@business.com"
-              />
+                placeholder="you@business.com" />
             </div>
 
             <div>
               <label className="block text-sm text-gray-400 mb-1">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                required
+              <input type="password" name="password" value={form.password} onChange={handleChange} required
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition"
-                placeholder="••••••••"
-              />
+                placeholder="••••••••" />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-3 transition"
-            >
+            <button type="submit" disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-3 transition">
               {loading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
 
           <p className="text-center text-gray-500 text-sm mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-400 hover:text-blue-300">
-              Sign in
-            </Link>
+            <Link to="/login" className="text-blue-400 hover:text-blue-300">Sign in</Link>
           </p>
         </div>
       </div>

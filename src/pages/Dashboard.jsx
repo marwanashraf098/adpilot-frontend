@@ -169,10 +169,19 @@ function Dashboard() {
   const [business, setBusiness] = useState(null);
 
   useEffect(() => {
-    if (!token) { navigate("/login"); return; }
-    fetchBusiness();
-    fetchCampaigns();
-  }, []);
+  if (!token) { navigate('/login'); return }
+
+  // Check if returning from Meta OAuth during onboarding
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('connected') === 'true' && localStorage.getItem('oauthReturnTo') === 'onboarding') {
+    localStorage.removeItem('oauthReturnTo')
+    navigate('/onboarding?connected=true')
+    return
+  }
+
+  fetchBusiness()
+  fetchCampaigns()
+}, [])
 
   const fetchBusiness = async () => {
     try {
