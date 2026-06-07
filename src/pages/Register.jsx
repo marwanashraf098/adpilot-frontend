@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 
-const BACKEND = 'http://localhost:8080'
+const BACKEND = 'https://adpilot-backend-production-24e1.up.railway.app'
 
 function Register() {
   const navigate = useNavigate()

@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
-const BACKEND = 'http://localhost:8080'
-const AI = 'http://localhost:8001'
+const AI = 'https://adpilot-ai-service-production.up.railway.app'
 
 function CopyGenerator() {
   const navigate = useNavigate()

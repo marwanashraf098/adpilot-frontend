@@ -2,8 +2,8 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
-const BACKEND = 'http://localhost:8080'
-const AI = 'http://localhost:8001'
+const BACKEND = 'https://adpilot-backend-production-24e1.up.railway.app'
+const AI = 'https://adpilot-ai-service-production.up.railway.app'
 
 function CreateCampaign() {
   const navigate = useNavigate()
