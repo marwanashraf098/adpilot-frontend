@@ -10,6 +10,8 @@ import CopyGenerator from './pages/CopyGenerator'
 import Chat from './pages/Chat'
 import Onboarding from './pages/Onboarding'
 import CreateCampaign from './pages/CreateCampaign'
+import CompetitorSpy from './pages/CompetitorSpy'
+
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('token')
@@ -42,6 +44,7 @@ function App() {
         <Route path="/create-campaign" element={
           <PrivateRoute><CreateCampaign /></PrivateRoute>
         } />
+        <Route path="/competitor-spy" element={<PrivateRoute><CompetitorSpy /></PrivateRoute>} />
       </Routes>
     </BrowserRouter>
   )
